@@ -18,7 +18,7 @@ NEXT_PUBLIC_SITE_KEY=????
 docker compose up
 ```
 
-Open [http://localhost](http://localhost) with your browser to see the result.
+Open [http://localhost:3001](http://localhost:3001) with your browser to see the result.
 
 <br>
 
