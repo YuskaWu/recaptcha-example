@@ -1,0 +1,62 @@
+services:
+  # HTTP routing with Traefik
+  # https://docs.docker.com/guides/traefik/
+  reverse-proxy:
+    container_name: recaptcha-example-reverse-proxy
+    image: traefik:v3.6.2
+    command:
+      # Enables the web UI
+      - --api.insecure=true
+      # tell traefik automatically discover and route traffic
+      # to Docker containers based on the labels attached to those containers
+      - --providers.docker
+      # Enable ping endpoint for health check
+      - --ping.entryPoint=traefik
+    ports:
+      # The HTTP port
+      - "80:80"
+      # The Web UI (enabled by --api.insecure=true)
+      - "8080:8080"
+    volumes:
+      # So that Traefik can listen to the Docker events
+      - /var/run/docker.sock:/var/run/docker.sock
+    healthcheck:
+      test: ["CMD", "traefik", "healthcheck", "--ping"]
+      interval: 3s
+      timeout: 3s
+      retries: 3
+      start_period: 3s # Give Traefik time to start before checking
+    networks:
+      - recaptcha-example
+
+  frontend:
+    build:
+      # NOTE: The .dockerignore only work inside context path
+      context: .
+      # relative to context path
+      dockerfile: ./Dockerfile
+    image: "recaptcha-example-frontend:latest"
+    working_dir: /app
+    volumes:
+      - .:/app
+      # mount an empty folder on /app/node_modules/ so local node_modules will not
+      # take the place of container's node_moudles:
+      # https://stackoverflow.com/a/37898591
+      - /app/node_modules/
+    command: pnpm dev -p 3000
+    # command: pnpm start
+    container_name: recaptcha-example-frontend
+    depends_on:
+      reverse-proxy:
+        condition: service_healthy
+    labels:
+      # indicate the routing rule
+      - "traefik.http.routers.frontend.rule=HostRegexp(`.+`)"
+      # indicates the port Traefik should forward the request to
+      - "traefik.http.services.frontend.loadbalancer.server.port=3000"
+    networks:
+      - recaptcha-example
+
+networks:
+  recaptcha-example:
+    driver: bridge
