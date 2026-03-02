@@ -61,7 +61,7 @@ export default function HomePage() {
   return (
     <main className="fixed flex flex-col size-full items-center justify-center gap-8">
       <Script
-        src="https://www.google.com/recaptcha/api.js?render=6LdAwXwsAAAAAGXavcnGzZ7osgOMY-ytOJZn6TBN"
+        src={`https://www.google.com/recaptcha/api.js?render=${SITE_KEY}`}
         onLoad={() => {
           console.log('Script has loaded successfully!')
         }}
